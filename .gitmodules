@@ -1,0 +1,3 @@
+[submodule "external-snapshot-session-access"]
+	path = external-snapshot-session-access
+	url = git@github.com:PrasadG193/external-snapshot-session-access.git
