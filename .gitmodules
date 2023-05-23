@@ -1,3 +1,6 @@
 [submodule "external-snapshot-session-access"]
 	path = external-snapshot-session-access
 	url = git@github.com:PrasadG193/external-snapshot-session-access.git
+[submodule "external-snapshot-session-service"]
+	path = external-snapshot-session-service
+	url = git@github.com:PrasadG193/external-snapshot-session-service.git
