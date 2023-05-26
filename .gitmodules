@@ -4,3 +4,6 @@
 [submodule "external-snapshot-session-service"]
 	path = external-snapshot-session-service
 	url = git@github.com:PrasadG193/external-snapshot-session-service.git
+[submodule "sample-csi-cbt-service"]
+	path = sample-csi-cbt-service
+	url = git@github.com:PrasadG193/sample-csi-cbt-service.git
