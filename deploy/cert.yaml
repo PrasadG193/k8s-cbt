@@ -1,0 +1,26 @@
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: ext-snap-session-access-issuer
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: ext-snap-session-access-tls-cert
+spec:
+  secretName: ext-snap-session-access-tls-cert
+  secretTemplate:
+    labels:
+      app.kubernetes.io/instance: hostpath.csi.k8s.io
+      app.kubernetes.io/part-of: csi-driver-host-path
+      app.kubernetes.io/name: csi-hostpathplugin
+      app.kubernetes.io/component: plugin
+  dnsNames:
+    - ext-snap-session-access-webhook-service
+    - ext-snap-session-access-webhook-service.kube-system
+    - ext-snap-session-access-webhook-service.kube-system.svc
+  issuerRef:
+    name: ext-snap-session-access-issuer
+    kind: Issuer

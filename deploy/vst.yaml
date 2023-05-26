@@ -1,0 +1,8 @@
+apiVersion: cbt.storage.k8s.io/v1alpha1
+kind: CSISnapshotSessionAccess
+metadata:
+  name: test
+spec:
+  snapshots:
+  - snapshot-csi-pvc-jrx5c
+  - snapshot-csi-pvc-jr7tp
