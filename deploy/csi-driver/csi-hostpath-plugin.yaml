@@ -4,7 +4,7 @@ kind: ServiceAccount
 apiVersion: v1
 metadata:
   name: csi-hostpathplugin-sa
-  namespace: kube-system
+  namespace: csi-snapshot-session-manager
   labels:
     app.kubernetes.io/instance: hostpath.csi.k8s.io
     app.kubernetes.io/part-of: csi-driver-host-path
@@ -14,7 +14,7 @@ metadata:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: ext-snap-session-access-role
+  name: snapshot-session-access-role
 rules:
 - apiGroups:
   - cbt.storage.k8s.io
@@ -65,19 +65,19 @@ kind: ClusterRoleBinding
 metadata:
   labels:
     app.kubernetes.io/name: clusterrolebinding
-    app.kubernetes.io/instance: ext-snap-session-access-rolebinding
+    app.kubernetes.io/instance: snapshot-session-access-rolebinding
     app.kubernetes.io/component: rbac
-    app.kubernetes.io/created-by: ext-snap-session-access
-    app.kubernetes.io/part-of: ext-snap-session-access
-  name: ext-snap-session-access-rolebinding
+    app.kubernetes.io/created-by: snapshot-session-access
+    app.kubernetes.io/part-of: snapshot-session-access
+  name: snapshot-session-access-rolebinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: ext-snap-session-access-role
+  name: snapshot-session-access-role
 subjects:
 - kind: ServiceAccount
   name: csi-hostpathplugin-sa
-  namespace: kube-system
+  namespace: csi-snapshot-session-manager
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -95,7 +95,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: csi-hostpathplugin-sa
-  namespace: kube-system
+  namespace: csi-snapshot-session-manager
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -113,7 +113,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: csi-hostpathplugin-sa
-  namespace: kube-system
+  namespace: csi-snapshot-session-manager
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -131,7 +131,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: csi-hostpathplugin-sa
-  namespace: kube-system
+  namespace: csi-snapshot-session-manager
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -149,7 +149,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: csi-hostpathplugin-sa
-  namespace: kube-system
+  namespace: csi-snapshot-session-manager
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -167,7 +167,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: csi-hostpathplugin-sa
-  namespace: kube-system
+  namespace: csi-snapshot-session-manager
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -178,7 +178,7 @@ metadata:
     app.kubernetes.io/name: csi-hostpathplugin
     app.kubernetes.io/component: attacher-role
   name: csi-hostpathplugin-attacher-role
-  namespace: kube-system
+  namespace: csi-snapshot-session-manager
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -196,7 +196,7 @@ metadata:
     app.kubernetes.io/name: csi-hostpathplugin
     app.kubernetes.io/component: health-monitor-controller-role
   name: csi-hostpathplugin-health-monitor-controller-role
-  namespace: kube-system
+  namespace: csi-snapshot-session-manager
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -214,7 +214,7 @@ metadata:
     app.kubernetes.io/name: csi-hostpathplugin
     app.kubernetes.io/component: provisioner-role
   name: csi-hostpathplugin-provisioner-role
-  namespace: kube-system
+  namespace: csi-snapshot-session-manager
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -232,7 +232,7 @@ metadata:
     app.kubernetes.io/name: csi-hostpathplugin
     app.kubernetes.io/component: resizer-role
   name: csi-hostpathplugin-resizer-role
-  namespace: kube-system
+  namespace: csi-snapshot-session-manager
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -250,7 +250,7 @@ metadata:
     app.kubernetes.io/name: csi-hostpathplugin
     app.kubernetes.io/component: snapshotter-role
   name: csi-hostpathplugin-snapshotter-role
-  namespace: kube-system
+  namespace: csi-snapshot-session-manager
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -263,7 +263,7 @@ kind: StatefulSet
 apiVersion: apps/v1
 metadata:
   name: csi-hostpathplugin
-  namespace: kube-system
+  namespace: csi-snapshot-session-manager
   labels:
     app.kubernetes.io/instance: hostpath.csi.k8s.io
     app.kubernetes.io/part-of: csi-driver-host-path
@@ -295,20 +295,15 @@ spec:
           - /manager
           args:
           - --leader-elect
-          image: prasadg193/external-snapshot-session-access:latest
-          name: ext-snap-session-access
+          image: prasadg193/snapshot-session-access:latest
+          name: snapshot-session-access
           volumeMounts:
             - mountPath: /csi
               name: socket-dir
-            #- mountPath: /datapath/certificates/ca
-            #  name: cbt-ca-cert
-            #  readOnly: true
             - mountPath: /tmp/k8s-webhook-server/serving-certs
               name: cert
               readOnly: true
           env:
-            - name: EXT_SNAP_SESSION_SVC_URL
-              value: "external-snapshot-session-service.kube-system:80"
             - name: CSI_ENDPOINT
               value: /csi/csi.sock
             - name: CBT_SERVER_CA_BUNDLE
@@ -487,13 +482,10 @@ spec:
               name: socket-dir
 
       volumes:
-        #- name: cbt-ca-cert
-        #  secret:
-        #    secretName: ext-snap-session-access-ca-cert
         - name: cert
           secret:
             defaultMode: 420
-            secretName: ext-snap-session-access-tls-cert
+            secretName: snapshot-session-access-tls-cert
         - hostPath:
             path: /var/lib/kubelet/plugins/csi-hostpath
             type: DirectoryOrCreate
@@ -525,17 +517,17 @@ apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
 metadata:
   annotations:
-    cert-manager.io/inject-ca-from: kube-system/ext-snap-session-access-tls-cert
+    cert-manager.io/inject-ca-from: csi-snapshot-session-manager/snapshot-session-access-tls-cert
   labels:
     app.kubernetes.io/part-of: cbt-kubebuilder
-  name: ext-snap-session-access-validating-webhook-configuration
+  name: snapshot-session-access-validating-webhook-configuration
 webhooks:
 - admissionReviewVersions:
   - v1
   clientConfig:
     service:
-      name: ext-snap-session-access-webhook-service
-      namespace: kube-system
+      name: snapshot-session-access-webhook-service
+      namespace: csi-snapshot-session-manager
       path: /csisnapshotsessionaccess/validate
       port: 443
   failurePolicy: Fail
@@ -559,9 +551,9 @@ kind: Service
 metadata:
   annotations:
   labels:
-    app.kubernetes.io/part-of: ext-snap-session-access
-  name: ext-snap-session-access-webhook-service
-  namespace: kube-system
+    app.kubernetes.io/part-of: snapshot-session-access
+  name: snapshot-session-access-webhook-service
+  namespace: csi-snapshot-session-manager
 spec:
   ports:
   - port: 443

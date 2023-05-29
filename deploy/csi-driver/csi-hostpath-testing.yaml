@@ -11,7 +11,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: hostpath-service
-  namespace: kube-system
+  namespace: csi-snapshot-session-manager
   labels:
     app.kubernetes.io/instance: hostpath.csi.k8s.io
     app.kubernetes.io/part-of: csi-driver-host-path
@@ -31,7 +31,7 @@ kind: StatefulSet
 apiVersion: apps/v1
 metadata:
   name: csi-hostpath-socat
-  namespace: kube-system
+  namespace: csi-snapshot-session-manager
   labels:
     app.kubernetes.io/instance: hostpath.csi.k8s.io
     app.kubernetes.io/part-of: csi-driver-host-path

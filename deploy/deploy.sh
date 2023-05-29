@@ -203,13 +203,13 @@ commonLabels:
   app.kubernetes.io/instance: hostpath.csi.k8s.io
   app.kubernetes.io/part-of: csi-driver-host-path
 
-namespace: kube-system
+namespace: csi-snapshot-session-manager
 
 resources:
 - ./rbac.yaml
 EOF
 
-    run kubectl apply --kustomize "${TEMP_DIR}" -n kube-system
+    run kubectl apply --kustomize "${TEMP_DIR}" -n csi-snapshot-session-manager
 done
 
 # deploy hostpath plugin and registrar sidecar
@@ -263,7 +263,7 @@ for i in $(ls ${BASE_DIR}/csi-driver/*.yaml | sort); do
 done
 
 check_statefulset () (
-    ready=$(kubectl get "statefulset/$1" -o jsonpath="{.status.readyReplicas}" --namespace kube-system)
+    ready=$(kubectl get "statefulset/$1" -o jsonpath="{.status.readyReplicas}" --namespace csi-snapshot-session-manager)
     if [ "$ready" ] && [ "$ready" -gt 0 ]; then
         return 0
     fi
@@ -282,7 +282,7 @@ check_statefulsets () (
 
 # Wait until all StatefulSets of the deployment are ready.
 # The assumption is that we use one or more of those.
-statefulsets="$(kubectl get statefulsets -l app.kubernetes.io/instance=hostpath.csi.k8s.io -o jsonpath='{range .items[*]}{" "}{.metadata.name}{end}' --namespace kube-system)"
+statefulsets="$(kubectl get statefulsets -l app.kubernetes.io/instance=hostpath.csi.k8s.io -o jsonpath='{range .items[*]}{" "}{.metadata.name}{end}' --namespace csi-snapshot-session-manager)"
 cnt=0
 while ! check_statefulsets $statefulsets; do
     if [ $cnt -gt 30 ]; then
