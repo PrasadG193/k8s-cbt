@@ -34,40 +34,53 @@ The detailed design has being discussed here: https://docs.google.com/presentati
 
 ### snapshot-session-access
 
-The `snapshot-session-access` service is deployed as a sidecar to the csi driver. In this prototype, we are using [csi-driver-host-path](https://github.com/kubernetes-csi/csi-driver-host-path) driver as a sample driver. The deploy script has been cloned and refactored to add `snapshot-session-access` sidecar alongside the hostpath csi containers
-
 1. Create CRDs
 
     ```bash
     $ kubectl create -f deploy/crds/
     ```
-
-2. Provision certificate for ValidatingWebhookConfiguration using cert-manager
-
-    ```bash
-    $ kubectl create -f deploy/cert.yaml
-    ```
-
-
-3. Create namespace `csi-snapshot-session-manager`
+    
+2. Create namespace `csi-snapshot-session-manager`
     
     ```bash
     $ kubectl create namespace csi-snapshot-session-manager
     ```
 
-4. Deploy hostpath csi driver along side snapshot-session-access sidecar
+3. Provision certificate for ValidatingWebhookConfiguration using cert-manager
+
+    ```bash
+    $ kubectl create -f deploy/csi-snapshot-session-manager/cert.yaml -n csi-snapshot-session-manager
+    ```
+    
+4. Deploy `csi-snapshot-session-manager` service
+
+    ```bash
+    $ kubectl create -f deploy/csi-snapshot-session-manager/csi-snapshot-session-manager.yaml.yaml -n csi-snapshot-session-manager
+    ```
+
+### Host path CSI driver
+
+In this prototype, we are using [csi-driver-host-path](https://github.com/kubernetes-csi/csi-driver-host-path) driver as a sample driver. The deploy script has been cloned and refactored to change the default namespace in which csi driver gets deployed
+
+1. Create namespace
+
+    ```bash
+    $ kubectl create namespace csi-driver
+    ```
+
+2. Deploy hostpath csi driver along side snapshot-session-access sidecar
    
     ```bash
     $ ./deploy/deploy.sh
     ```
 
-5. Create hostpath `StorageClass` and `VolumeSnapshotClass`
+3. Create hostpath `StorageClass` and `VolumeSnapshotClass`
 
     ```bash
     $ kubectl create -f deploy/test/csi-storageclass.yaml
     ```
 
-6. (optional) Create test pvc and snapshots
+4. (optional) Create test pvc and snapshots
 
     ```bash
     $ kubectl create -f deploy/test/csi-pvc-block.yaml
@@ -78,33 +91,26 @@ The `snapshot-session-access` service is deployed as a sidecar to the csi driver
 
 external-snapshot-session-service and sample-csi-cbt-service are deployed as a sidecars to each other in the single pod
 
-1. Create namespace
-
-    ```bash
-    $ kubectl create namespace csi-driver
-    ```
-
-2. Provision TLS Certs
+1. Provision TLS Certs
 
     ```bash
     $ cd deploy/external-snapshot-session-service/cert
     $ ./gen
     ```
 
-3. Add TLS certs to deployment manifests
+2. Add TLS certs to deployment manifests
 
     ```bash
     $ kubectl create secret tls ext-snap-session-svc-certs --namespace=csi-driver --cert=deploy/external-snapshot-session-service/cert/server-cert.pem --key=deploy/external-snapshot-session-service/cert/server-key.pem 
     ```
 
-4. Deploy external-snapshot-session-service
+3. Deploy external-snapshot-session-service
 
     ```bash
     $ kubectl create -f deploy/external-snapshot-session-service/ext-snap-session-svc.yaml -n csi-driver
     ```
 
-
-5. Create `CSISnapshotSessionServer` resource
+4. Create `CSISnapshotSessionServer` resource
 
     Enacode CA Cert
     
