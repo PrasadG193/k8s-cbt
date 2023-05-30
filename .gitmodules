@@ -7,3 +7,6 @@
 [submodule "snapshot-session-access"]
 	path = snapshot-session-access
 	url = git@github.com:PrasadG193/snapshot-session-access.git
+[submodule "csi-snapshot-session-manager"]
+	path = csi-snapshot-session-manager
+	url = git@github.com:PrasadG193/csi-snapshot-session-manager.git
