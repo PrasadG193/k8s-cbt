@@ -32,7 +32,7 @@ The detailed design has being discussed here: https://docs.google.com/presentati
 ## Deployment
 
 
-#### snapshot-session-access
+### snapshot-session-access
 
 The `snapshot-session-access` service is deployed as a sidecar to the csi driver. In this prototype, we are using [csi-driver-host-path](https://github.com/kubernetes-csi/csi-driver-host-path) driver as a sample driver. The deploy script has been cloned and refactored to add `snapshot-session-access` sidecar alongside the hostpath csi containers
 
