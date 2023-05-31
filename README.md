@@ -3,7 +3,7 @@
 This repo consists working prototype for Changed Block Tracking capability in Kubernetes as per the KEP: https://github.com/kubernetes/enhancements/pull/3367
 
 
-The detailed design has being discussed here: https://docs.google.com/presentation/d/1iIRq2dzSuXktrEm9AjPwyrQIl_EoeqD-BJ7tujoK9C8/edit?usp=sharing
+The detailed design is being discussed here: https://docs.google.com/presentation/d/1iIRq2dzSuXktrEm9AjPwyrQIl_EoeqD-BJ7tujoK9C8/edit?usp=sharing
 
 
 ## Diagram
