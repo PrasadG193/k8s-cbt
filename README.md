@@ -12,7 +12,7 @@ The detailed design has being discussed here: https://docs.google.com/presentati
 
 ## Components
 
-1. snapshot-session-access
+1. csi-snapshot-session-manager
     
     - Provides a validating webhook for the CSISnapshotSessionAccess CR
     - Provides the CSISnapshotSessionAccess CR controller
@@ -32,7 +32,7 @@ The detailed design has being discussed here: https://docs.google.com/presentati
 ## Deployment
 
 
-### snapshot-session-access
+### csi-snapshot-session-manager
 
 1. Create CRDs
 
@@ -68,7 +68,7 @@ In this prototype, we are using [csi-driver-host-path](https://github.com/kubern
     $ kubectl create namespace csi-driver
     ```
 
-2. Deploy hostpath csi driver along side snapshot-session-access sidecar
+2. Deploy hostpath csi driver 
    
     ```bash
     $ ./deploy/deploy.sh
