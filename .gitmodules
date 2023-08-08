@@ -1,12 +1,6 @@
-[submodule "external-snapshot-session-service"]
-	path = external-snapshot-session-service
-	url = git@github.com:PrasadG193/external-snapshot-session-service.git
 [submodule "sample-csi-cbt-service"]
 	path = sample-csi-cbt-service
 	url = git@github.com:PrasadG193/sample-csi-cbt-service.git
-[submodule "snapshot-session-access"]
-	path = snapshot-session-access
-	url = git@github.com:PrasadG193/snapshot-session-access.git
-[submodule "csi-snapshot-session-manager"]
-	path = csi-snapshot-session-manager
-	url = git@github.com:PrasadG193/csi-snapshot-session-manager.git
+[submodule "external-snapshot-metadata"]
+	path = external-snapshot-metadata
+	url = git@github.com:PrasadG193/external-snapshot-metadata.git
