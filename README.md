@@ -8,7 +8,7 @@ The detailed design is being discussed here: https://docs.google.com/presentatio
 
 ## Diagram
 
-![](./design/cbt-kep-v5.png)
+![](./design/cbt-kep.svg)
 
 ## Components
 
