@@ -12,18 +12,14 @@ The detailed design is being discussed here: https://docs.google.com/presentatio
 
 ## Components
 
-1. csi-snapshot-session-manager
-    
-    - Provides a validating webhook for the CSISnapshotSessionAccess CR
-    - Provides the CSISnapshotSessionAccess CR controller
-
-2. external-snapshot-session-service
+1. external-snapshot-metadata
     
     - Sidecar to the vendor provided SP snapshot session service
-    - Validates, translates args and proxies RPC to SP service over unix socket 
+    - Authenticate the K8s client with the TokenReview API
+    - Authorize the K8s client with the SubjectAccessReview API
+    - Translates args and proxies RPC to SP service over unix socket 
 
-
-3. sample-csi-cbt-service
+2. sample-csi-cbt-service
 
     - Sample vendor provided SP snapshot service which implements CSI GetDelta rpc to compute Change Block Data
     - Listens requests over unix socket
@@ -31,32 +27,6 @@ The detailed design is being discussed here: https://docs.google.com/presentatio
 
 ## Deployment
 
-
-### csi-snapshot-session-manager
-
-1. Create CRDs
-
-    ```bash
-    $ kubectl create -f deploy/crds/
-    ```
-    
-2. Create namespace `csi-snapshot-session-manager`
-    
-    ```bash
-    $ kubectl create namespace csi-snapshot-session-manager
-    ```
-
-3. Provision certificate for ValidatingWebhookConfiguration using cert-manager
-
-    ```bash
-    $ kubectl create -f deploy/csi-snapshot-session-manager/cert.yaml -n csi-snapshot-session-manager
-    ```
-    
-4. Deploy `csi-snapshot-session-manager` service
-
-    ```bash
-    $ kubectl create -f deploy/csi-snapshot-session-manager/csi-snapshot-session-manager.yaml.yaml -n csi-snapshot-session-manager
-    ```
 
 ### Host path CSI driver
 
@@ -83,47 +53,56 @@ In this prototype, we are using [csi-driver-host-path](https://github.com/kubern
 4. (optional) Create test pvc and snapshots
 
     ```bash
-    $ kubectl create -f deploy/test/csi-pvc-block.yaml
-    $ kubectl create -f deploy/test/csi-snapshot.yaml
+    $ kubectl create namespace database
+    $ kubectl create -f deploy/test/csi-pvc-block.yaml -n database
     ```
 
-### external-snapshot-session-service and sample-csi-cbt-service
+    Create at least 2 snapshots
+    ```bash
+    $ kubectl create -f deploy/test/csi-snapshot.yaml -n database
+    volumesnapshot.snapshot.storage.k8s.io/snapshot-csi-pvc-729hw created
+    $ kubectl create -f deploy/test/csi-snapshot.yaml -n database
+    volumesnapshot.snapshot.storage.k8s.io/snapshot-csi-pvc-sxkj5 created
+    ```
 
-external-snapshot-session-service and sample-csi-cbt-service are deployed as a sidecars to each other in the single pod
+### external-snapshot-metadata service and sample-csi-cbt-service
+
+external-snapshot-metadata service and sample-csi-cbt-service are deployed as a sidecars to each other in the single pod
 
 1. Provision TLS Certs
 
     ```bash
-    $ cd deploy/external-snapshot-session-service/cert
+    $ cd deploy/external-snapshot-metadata/cert/
     $ ./gen
     ```
 
 2. Add TLS certs to deployment manifests
 
+    Go to project root directory and execute the following commands
     ```bash
-    $ kubectl create secret tls ext-snap-session-svc-certs --namespace=csi-driver --cert=deploy/external-snapshot-session-service/cert/server-cert.pem --key=deploy/external-snapshot-session-service/cert/server-key.pem 
+    $ kubectl create secret tls ext-snap-metadata-certs --namespace=csi-driver --cert=deploy/external-snapshot-metadata/cert/server-cert.pem --key=deploy/external-snapshot-metadata/cert/server-key.pem 
     ```
 
-3. Deploy external-snapshot-session-service
+3. Deploy external-snapshot-metadata service
 
     ```bash
-    $ kubectl create -f deploy/external-snapshot-session-service/ext-snap-session-svc.yaml -n csi-driver
+    $ kubectl create -f deploy/external-snapshot-metadata/ext-snap-metadata-svc.yaml -n csi-driver
     ```
 
-4. Create `CSISnapshotSessionServer` resource
+4. Create `SnapshotMetadataService` resource
 
     Enacode CA Cert
     
     ```bash
-    $ base64 -i ./deploy/external-snapshot-session-service/cert/ca-cert.pem
+    $ base64 -i ./deploy/external-snapshot-metadata/cert/ca-cert.pem
     ```
 
-    Copy the output and replace `GENERATED_CA_CERT` from `deploy/external-snapshot-session-service/csisnapshotsessionservice.yaml`
+    Copy the output and replace `GENERATED_CA_CERT` from `deploy/external-snapshot-metadata/snapshotmetadataservice.yaml`
 
-    Create `CSISnapshotSessionServer` resources in `csi-driver` namespace
+    Create `SnapshotMetadataService` resources in `csi-driver` namespace
 
     ```bash
-    $ kubectl create -f deploy/external-snapshot-session-service/csisnapshotsessionservice.yaml
+    $ kubectl create -f deploy/external-snapshot-metadata/snapshotmetadataservice.yaml
     ```
 
 ### Test with sample client
@@ -132,7 +111,7 @@ external-snapshot-session-service and sample-csi-cbt-service are deployed as a s
 
     ```bash
     $ kubectl create namespace cbt-client
-    $ kubectl create -f deploy/external-snapshot-session-service/client/
+    $ kubectl create -f  deploy/external-snapshot-metadata/client/client.yaml
     ```
 
 2. Run grpc-client
@@ -142,17 +121,21 @@ external-snapshot-session-service and sample-csi-cbt-service are deployed as a s
     # Find the cbt-client pod name and replace CBT_CLIENT_POD_NAME in the following command with actual pod name
 
     $ kubectl get pods -n cbt-client
-    NAME                          READY   STATUS    RESTARTS   AGE
-    cbt-client-84bb4b669c-7f945   1/1     Running   0          8m53s
+    NAME                        READY   STATUS    RESTARTS   AGE
+    cbt-client-d854dbbf-88rdd   1/1     Running   0          69m
 
-    $ kubectl exec -n cbt-client CBT_CLIENT_POD_NAME -- /grpc-client -h                                                                     
+    $ kubectl exec -n cbt-client cbt-client-d854dbbf-88rdd -- /grpc-client -h
     Usage of /grpc-client:
     -base string
             base volume snapshot name
+    -client-namespace string
+            client namespace (default "default")
     -kubeconfig string
             Paths to a kubeconfig. Only required if out-of-cluster.
     -namespace string
-            app namespace (default "default")
+            snapshot namespace (default "default")
+    -service-account string
+            client service account (default "default")
     -target string
             target volume snapshot name
     ```
@@ -160,27 +143,41 @@ external-snapshot-session-service and sample-csi-cbt-service are deployed as a s
     Sample output
 
     ```bash
-    $ kubectl exec -n cbt-client cbt-client-84bb4b669c-7f945 -- /grpc-client -base snapshot-csi-pvc-jr7tp -target snapshot-csi-pvc-jrx5c -namespace default
-    ## Creating CSI Snapshot Session in default namespace...
+    $ kubectl exec -n cbt-client cbt-client-d854dbbf-88rdd -- /grpc-client -base snapshot-csi-pvc-lppqh -target snapshot-csi-pvc-s2pmn -namespace database -client-namespace cbt-client -service-account cbt-client
 
-    Session creation state:  
-    2023/05/30 13:54:42 finished
-    Session creation state:  Ready
-    Session params:  {
-    "sessionState": "Ready",
-    "caCert": "xxxxxx",
-    "sessionToken": "emZ4Ymc0bWJudnZ0cW5rd2NuY3NqbWtxemZ0Mjd0dnE=",
-    "sessionURL": "external-snapshot-session-service.csi-driver:80",
-    "expiryTime": "2023-05-30T14:04:41Z"
+    ## Discovering SnapshotMetadataService for the driver and creating SA Token 
+
+    2023/08/08 14:02:37 Finding driver name for the snapshots
+    2023/08/08 14:02:37 Search SnapshotMetadataService object for driver: hostpath.csi.k8s.io
+    2023/08/08 14:02:37 Found SnapshotMetadataService object csi-hostpath-xw2s8 for driver: hostpath.csi.k8s.io
+    2023/08/08 14:02:37 Creating SA Token using TokenRequest resource
+
+    ## Making gRPC Call on external-snapshot-metadata.csi-driver:6443 endpoint to Get Changed Blocks Metadata...
+
+    2023/08/08 14:02:37 TokenRequest Response:: {
+    "metadata": {
+        "name": "cbt-client",
+        "namespace": "cbt-client",
+        "creationTimestamp": "2023-08-08T14:02:37Z",
+    },
+    "spec": {
+        "audiences": [
+        "005e2583-91a3-4850-bd47-4bf32990fd00"
+        ],
+        "expirationSeconds": 600,
+        "boundObjectRef": null
+    },
+    "status": {
+        "token": "XXXXXXXXXX",
+        "expirationTimestamp": "2023-08-08T14:12:37Z"
     }
-
-    ## Making gRPC Call on external-snapshot-session-service.csi-driver:80 endpoint to Get Changed Blocks Metadata...
-
+    }
     Resp received:
     {"volume_size_bytes":1073741824,"block_metadata":[{"byte_offset":1,"size_bytes":1048576},{"byte_offset":2,"size_bytes":1048576}]}
     {"volume_size_bytes":1073741824,"block_metadata":[{"byte_offset":3,"size_bytes":1048576},{"byte_offset":4,"size_bytes":1048576}]}
     {"volume_size_bytes":1073741824,"block_metadata":[{"byte_offset":5,"size_bytes":1048576},{"byte_offset":6,"size_bytes":1048576}]}
     {"volume_size_bytes":1073741824,"block_metadata":[{"byte_offset":7,"size_bytes":1048576},{"byte_offset":8,"size_bytes":1048576}]}
+    2023/08/08 14:02:37 finished
     {"volume_size_bytes":1073741824,"block_metadata":[{"byte_offset":9,"size_bytes":1048576},{"byte_offset":10,"size_bytes":1048576}]}
     {"volume_size_bytes":1073741824,"block_metadata":[{"byte_offset":11,"size_bytes":1048576},{"byte_offset":12,"size_bytes":1048576}]}
     {"volume_size_bytes":1073741824,"block_metadata":[{"byte_offset":13,"size_bytes":1048576},{"byte_offset":14,"size_bytes":1048576}]}
