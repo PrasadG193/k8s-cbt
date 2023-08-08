@@ -1,6 +1,6 @@
 # k8s-cbt
 
-This repo consists working prototype for Changed Block Tracking capability in Kubernetes as per the KEP: https://github.com/kubernetes/enhancements/pull/3367
+This repo consists working prototype for Changed Block Tracking capability in Kubernetes as per the KEP: https://github.com/kubernetes/enhancements/pull/4082
 
 
 The detailed design is being discussed here: https://docs.google.com/presentation/d/1rZqXbyPcdCtOuexjke4hFIQRQ2FEpVP7VYdZpdAEhy4/edit?usp=sharing
