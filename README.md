@@ -73,7 +73,7 @@ external-snapshot-metadata service and sample-csi-cbt-service are deployed as a 
 
     ```bash
     $ cd deploy/external-snapshot-metadata/cert/
-    $ ./gen
+    $ ./gen.sh
     ```
 
 2. Add TLS certs to deployment manifests
@@ -83,13 +83,17 @@ external-snapshot-metadata service and sample-csi-cbt-service are deployed as a 
     $ kubectl create secret tls ext-snap-metadata-certs --namespace=csi-driver --cert=deploy/external-snapshot-metadata/cert/server-cert.pem --key=deploy/external-snapshot-metadata/cert/server-key.pem 
     ```
 
-3. Deploy external-snapshot-metadata service
+3. Create `snapshotmetadataservices.cbt.storage.k8s.io` CRD
+    ```bash
+    $ kubectl create -f external-snapshot-metadata/deploy/crd
+    ```
+5. Deploy external-snapshot-metadata service
 
     ```bash
     $ kubectl create -f deploy/external-snapshot-metadata/ext-snap-metadata-svc.yaml -n csi-driver
     ```
 
-4. Create `SnapshotMetadataService` resource
+6. Create `SnapshotMetadataService` resource
 
     Enacode CA Cert
     
